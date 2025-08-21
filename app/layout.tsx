@@ -1,12 +1,16 @@
+
 import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'Sales Training Bot',
+  description: 'Created by Gen AI Team',
+  generator: 'Sales Training Bot',
+  icons: {
+    icon: '/logo.ico', 
+  },
 }
 
 export default function RootLayout({
