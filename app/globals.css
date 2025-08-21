@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -119,5 +119,45 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .gradient-orb {
+    background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #c084fc 100%);
+    border-radius: 50%;
+    filter: blur(1px);
+    opacity: 0.8;
+  }
+
+  .scenario-card {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .scenario-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .voice-button {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .voice-button.listening {
+    animation: pulse 2s infinite;
+  }
+
+  .voice-button.speaking {
+    background: linear-gradient(45deg, #8b5cf6, #a855f7);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }
