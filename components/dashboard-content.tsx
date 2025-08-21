@@ -48,13 +48,13 @@ export function DashboardContent() {
       {/* Header */}
       <div className="p-6 border-b border-gray-200 bg-white">
         <div className="flex justify-end">
-          <Button
+          {/*<Button
             onClick={handleFeedbackClick}
             variant="outline"
             className="bg-gradient-to-r from-purple-100 to-pink-100 border-purple-200 text-purple-700 hover:from-purple-200 hover:to-pink-200"
           >
             Get Feedback
-          </Button>
+          </Button>*/}
         </div>
       </div>
 
@@ -98,7 +98,7 @@ export function DashboardContent() {
       </div>
 
       {/* Bottom input area */}
-      <div className="p-6 bg-white border-t border-gray-200">
+      {/*<div className="p-6 bg-white border-t border-gray-200">
         <div className="flex items-center justify-center gap-4">
           <Button variant="outline" size="icon" className="rounded-full w-12 h-12 bg-transparent">
             <Plus className="w-5 h-5" />
@@ -110,7 +110,7 @@ export function DashboardContent() {
             <RotateCcw className="w-5 h-5" />
           </Button>
         </div>
-      </div>
+      </div>*/}
     </div>
   )
 }
