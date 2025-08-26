@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Mic, MicOff, Volume2 } from "lucide-react"
+import { ArrowLeft, Mic, MicOff, Volume2, Bot } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
 import { useTextToSpeech } from "@/hooks/use-text-to-speech"
@@ -22,11 +22,46 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [isGeneratingFeedback, setIsGeneratingFeedback] = useState(false)
 
+  // Ref to track if session destroy has been called
+  const destroyCalled = useRef(false)
+
   const { isListening, transcript, isSupported, startListening, stopListening, resetTranscript } =
     useSpeechRecognition()
   const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech()
 
   const scenarioData = SALES_SCENARIOS[scenario as ScenarioType]
+
+  // Destroy session when user exits the chat (navigates away or closes tab)
+  useEffect(() => {
+    const destroySession = async () => {
+      if (destroyCalled.current) return
+      destroyCalled.current = true
+      try {
+        await fetch("/api/destroy-session", { method: "POST" })
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+
+    // On browser/tab close
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      destroySession()
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+
+    // On route change (navigate away)
+    const handleRouteChange = () => {
+      destroySession()
+    }
+    // next/navigation router does not expose events, so we use popstate for browser navigation
+    window.addEventListener("popstate", handleRouteChange)
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+      window.removeEventListener("popstate", handleRouteChange)
+      destroySession()
+    }
+  }, [])
 
   const getInitialMessage = (scenario: string) => {
     switch (scenario) {
@@ -192,13 +227,7 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
               </div>
             )}
           </div>
-          <Button
-            onClick={handleEndSession}
-            disabled={isGeneratingFeedback || messages.length < 2}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            {isGeneratingFeedback ? "Generating Feedback..." : "End Session"}
-          </Button>
+         
         </div>
       </div>
 
@@ -238,9 +267,18 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
         {/* Voice Interface */}
         <Card>
           <CardContent className="p-8 text-center">
+            <div className="flex justify-end mb-4">
+              <Button
+                onClick={handleEndSession}
+                disabled={isGeneratingFeedback || messages.length < 2}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {isGeneratingFeedback ? "Generating Feedback..." : "Get Feedback"}
+              </Button>
+            </div>
             <div className="mb-8">
               <div
-                className={`w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center transition-all duration-200 ${
+                className={`w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center transition-all duration-200 relative ${
                   isListening
                     ? "bg-gradient-to-br from-red-400 to-red-600 animate-pulse"
                     : isSpeaking
@@ -248,12 +286,16 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
                       : "bg-gradient-to-br from-purple-400 to-purple-600"
                 }`}
               >
+                {/* Chatbot icon in background */}
+                <Bot className="absolute w-8 h-8 text-white/30" />
+                
+                {/* Main icon */}
                 {isListening ? (
-                  <MicOff className="w-12 h-12 text-white" />
+                  <MicOff className="w-12 h-12 text-white relative z-10" />
                 ) : isSpeaking ? (
-                  <Volume2 className="w-12 h-12 text-white" />
+                  <Volume2 className="w-12 h-12 text-white relative z-10" />
                 ) : (
-                  <Mic className="w-12 h-12 text-white" />
+                  <Mic className="w-12 h-12 text-white relative z-10" />
                 )}
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">

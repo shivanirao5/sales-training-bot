@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardContent } from "@/components/dashboard-content"
 import { Sidebar } from "@/components/sidebar"
+import { GlobalHeader } from "@/components/global-header"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -23,9 +24,12 @@ export default async function DashboardPage() {
     .limit(10)
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar user={data.user} profile={profile} conversations={conversations || []} />
-      <DashboardContent />
+    <div className="flex flex-col h-screen bg-gray-50">
+      <GlobalHeader user={data.user} profile={profile} />
+      <div className="flex flex-1">
+        <Sidebar user={data.user} profile={profile} conversations={conversations || []} />
+        <DashboardContent />
+      </div>
     </div>
   )
 }

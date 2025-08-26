@@ -33,6 +33,19 @@ export default function SignUpPage() {
     }
 
     try {
+      // First check if email already exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email)
+        .single()
+
+      if (existingUser) {
+        setError("An account with this email already exists. Please use a different email or try signing in.")
+        setIsLoading(false)
+        return
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -43,7 +56,13 @@ export default function SignUpPage() {
           },
         },
       })
-      if (error) throw error
+      if (error) {
+        // Handle specific duplicate email error from Supabase
+        if (error.message.includes('already been registered') || error.message.includes('email already')) {
+          throw new Error("An account with this email already exists. Please use a different email or try signing in.")
+        }
+        throw error
+      }
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")

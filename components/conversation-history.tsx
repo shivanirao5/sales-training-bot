@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Calendar, Clock, TrendingUp, RotateCcw } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
+import { formatDate } from "@/lib/utils"
 
 interface ConversationData {
   id: string
@@ -97,7 +98,7 @@ export function ConversationHistory({ conversation }: ConversationHistoryProps) 
                 <Calendar className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm font-medium text-gray-900">Date</p>
-                  <p className="text-sm text-gray-600">{format(new Date(conversation.created_at), "MMM d, yyyy")}</p>
+                  <p className="text-sm text-gray-600">{formatDate(conversation.created_at)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">

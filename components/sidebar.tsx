@@ -1,14 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { Search, MessageSquare, Bot, LogOut } from "lucide-react"
+import { Search, MessageSquare, LogOut } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ConfirmationModal } from "@/components/ui/modal"
 import { formatDistanceToNow } from "date-fns"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { toTitleCase, formatDate } from "@/lib/utils"
 
 interface User {
   id: string
@@ -37,6 +39,7 @@ interface SidebarProps {
 
 export function Sidebar({ user, profile, conversations }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -47,13 +50,13 @@ export function Sidebar({ user, profile, conversations }: SidebarProps) {
   const formatScenarioType = (type: string) => {
     switch (type) {
       case "cold_calling":
-        return "Cold Call Prospecting"
+        return toTitleCase("Cold Call Prospecting")
       case "demo_pitch":
-        return "Product Demo Presentation"
+        return toTitleCase("Product Demo Presentation")
       case "upsell":
-        return "Upselling Existing Customers"
+        return toTitleCase("Upselling Existing Customers")
       default:
-        return type
+        return toTitleCase(type)
     }
   }
 
@@ -81,15 +84,14 @@ export function Sidebar({ user, profile, conversations }: SidebarProps) {
     <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-            <Bot className="w-5 h-5 text-white" />
-          </div>
-          <h1 className="font-semibold text-gray-900">Sales Training Bot</h1>
-        </div>
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-600">{profile?.email || user.email}</p>
-          <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-gray-500 hover:text-gray-700 p-1">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setIsLogoutModalOpen(true)} 
+            className="text-gray-500 hover:text-gray-700 p-1"
+          >
             <LogOut className="w-4 h-4" />
           </Button>
         </div>
@@ -126,7 +128,7 @@ export function Sidebar({ user, profile, conversations }: SidebarProps) {
                     <MessageSquare className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-medium text-gray-900 truncate">{conversation.title}</p>
+                        <p className="text-sm font-medium text-gray-900 truncate">{toTitleCase(conversation.title)}</p>
                         {conversation.score && (
                           <Badge variant="secondary" className={`text-xs ${getScoreColor(conversation.score)}`}>
                             {conversation.score}
@@ -135,7 +137,7 @@ export function Sidebar({ user, profile, conversations }: SidebarProps) {
                       </div>
                       <p className="text-xs text-gray-500 mb-1">{formatScenarioType(conversation.scenario_type)}</p>
                       <p className="text-xs text-gray-400">
-                        {formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true })}
+                        {formatDate(conversation.created_at)} • {formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true })}
                       </p>
                     </div>
                   </div>
@@ -151,6 +153,17 @@ export function Sidebar({ user, profile, conversations }: SidebarProps) {
           </div>
         </ScrollArea>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleSignOut}
+        title="Sign Out"
+        message="Are you sure you want to sign out? You'll need to sign in again to access your training sessions."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+      />
     </div>
   )
 }
