@@ -3,12 +3,13 @@ import { createClient } from "@/lib/supabase/server"
 import { TrainingSession } from "@/components/training-session"
 
 interface TrainingPageProps {
-  params: {
+  params: Promise<{
     scenario: string
-  }
+  }>
 }
 
 export default async function TrainingPage({ params }: TrainingPageProps) {
+  const { scenario } = await params
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -17,9 +18,9 @@ export default async function TrainingPage({ params }: TrainingPageProps) {
   }
 
   const validScenarios = ["cold_calling", "demo_pitch", "upsell"]
-  if (!validScenarios.includes(params.scenario)) {
+  if (!validScenarios.includes(scenario)) {
     redirect("/dashboard")
   }
 
-  return <TrainingSession scenario={params.scenario} userId={data.user.id} />
+  return <TrainingSession scenario={scenario} userId={data.user.id} />
 }

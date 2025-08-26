@@ -93,8 +93,16 @@ export function useSpeechRecognition() {
   const stopListening = useCallback(() => {
     if (recognition && isListening) {
       recognition.stop()
+      recognition.abort() // Force stop to prevent hanging
     }
   }, [recognition, isListening])
+
+  const forceStop = useCallback(() => {
+    if (recognition) {
+      recognition.abort()
+      setIsListening(false)
+    }
+  }, [recognition])
 
   const resetTranscript = useCallback(() => {
     setTranscript("")
@@ -106,6 +114,7 @@ export function useSpeechRecognition() {
     isSupported,
     startListening,
     stopListening,
+    forceStop,
     resetTranscript,
   }
 }
