@@ -12,7 +12,7 @@ export default function SignUpSuccessPage() {
               <CheckCircle className="w-12 h-12 text-green-500" />
             </div>
             <CardTitle className="text-2xl">Check Your Email</CardTitle>
-            <CardDescription>We've sent you a confirmation link to complete your registration.</CardDescription>
+            <CardDescription>We&apos;ve sent you a confirmation link to complete your registration.</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-sm text-muted-foreground mb-4">

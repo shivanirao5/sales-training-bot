@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Mic, MicOff, Volume2, Bot, CheckCircle, AlertCircle, Lightbulb, TrendingUp, X } from "lucide-react"
@@ -138,15 +138,7 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
     }
   }, [scenario, messages.length, speak])
 
-  // Handle transcript changes
-  useEffect(() => {
-    if (transcript && !isListening) {
-      handleUserMessage(transcript)
-      resetTranscript()
-    }
-  }, [transcript, isListening, resetTranscript])
-
-  const handleUserMessage = async (userMessage: string) => {
+  const handleUserMessage = useCallback(async (userMessage: string) => {
     if (!userMessage.trim() || isProcessing) return
 
     setIsProcessing(true)
@@ -181,7 +173,15 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
     } finally {
       setIsProcessing(false)
     }
-  }
+  }, [messages, isProcessing, scenario, userId, speak])
+
+  // Handle transcript changes
+  useEffect(() => {
+    if (transcript && !isListening) {
+      handleUserMessage(transcript)
+      resetTranscript()
+    }
+  }, [transcript, isListening, resetTranscript, handleUserMessage])
 
   const handleMicClick = () => {
     if (isListening) {
@@ -280,7 +280,7 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
           <CardContent className="p-6 text-center">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Speech Recognition Not Supported</h3>
             <p className="text-gray-600">
-              Your browser doesn't support speech recognition. Please use a modern browser like Chrome or Edge.
+              Your browser doesn&apos;t support speech recognition. Please use a modern browser like Chrome or Edge.
             </p>
             <Button className="mt-4" onClick={handleBackNavigation}>
               Go Back
