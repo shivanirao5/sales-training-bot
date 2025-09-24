@@ -24,8 +24,11 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedbackData, setFeedbackData] = useState<any>(null)
 
-  // Ref to track if session destroy has been called
+  // Refs to track state
   const destroyCalled = useRef(false)
+  const initialMessageSpoken = useRef(false)
+  const currentScenario = useRef<string>(scenario)
+  const mountedRef = useRef(false)
 
   const { isListening, transcript, isSupported, startListening, stopListening, forceStop, resetTranscript } =
     useSpeechRecognition()
@@ -128,15 +131,41 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
     }
   }
 
+  // Mark component as mounted
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+
+  // Reset flags when scenario changes
+  useEffect(() => {
+    if (currentScenario.current !== scenario) {
+      initialMessageSpoken.current = false
+      currentScenario.current = scenario
+    }
+  }, [scenario])
+
   // Initialize conversation with trainer greeting
   useEffect(() => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && !initialMessageSpoken.current && mountedRef.current) {
       const initialMessage = { role: "assistant" as const, content: getInitialMessage(scenario) }
       setMessages([initialMessage])
-      // Auto-speak the initial message
-      speak(getInitialMessage(scenario))
+      
+      // Auto-speak the initial message only once with a delay to ensure component is stable
+      const messageContent = getInitialMessage(scenario)
+      const timeoutId = setTimeout(() => {
+        // Double-check that we haven't already spoken and component is still mounted
+        if (!initialMessageSpoken.current && mountedRef.current) {
+          speak(messageContent)
+          initialMessageSpoken.current = true
+        }
+      }, 1000) // Increased delay to 1 second
+
+      return () => clearTimeout(timeoutId)
     }
-  }, [scenario, messages.length, speak])
+  }, [scenario, messages.length])
 
   const handleUserMessage = useCallback(async (userMessage: string) => {
     if (!userMessage.trim() || isProcessing) return
@@ -162,7 +191,11 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
       const trainerMessage = { role: "assistant" as const, content: data.message }
 
       setMessages((prev) => [...prev, trainerMessage])
-      speak(data.message)
+      
+      // Only speak if not currently listening to avoid echo/interruption
+      if (!isListening) {
+        speak(data.message)
+      }
     } catch (error) {
       console.error("Error getting trainer response:", error)
       const errorMessage = {
@@ -173,7 +206,7 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
     } finally {
       setIsProcessing(false)
     }
-  }, [messages, isProcessing, scenario, userId, speak])
+  }, [messages, isProcessing, scenario, userId, speak, isListening])
 
   // Handle transcript changes
   useEffect(() => {
@@ -265,6 +298,11 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
       // Show feedback inline instead of navigating
       setFeedbackData(data)
       setShowFeedback(true)
+      
+      // Store the conversation ID for future use
+      if (data.conversationId) {
+        setConversationId(data.conversationId)
+      }
     } catch (error) {
       console.error("[v0] Error generating feedback:", error)
       alert(`Failed to generate feedback: ${error instanceof Error ? error.message : "Unknown error"}`)
@@ -411,11 +449,10 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
               onClick={() => {
                 setShowFeedback(false)
                 setFeedbackData(null)
+                // Reset the initial message flag so it can be spoken again
+                initialMessageSpoken.current = false
                 setMessages([])
-                // Restart the session
-                const initialMessage = { role: "assistant" as const, content: getInitialMessage(scenario) }
-                setMessages([initialMessage])
-                speak(getInitialMessage(scenario))
+                // The useEffect will handle setting the initial message and speaking it
               }} 
               className="bg-purple-600 hover:bg-purple-700"
             >

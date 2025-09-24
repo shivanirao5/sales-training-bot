@@ -19,7 +19,8 @@ Key behaviors:
 - Raise common objections like budget, timing, or existing solutions
 - Gradually warm up if the salesperson handles objections well
 - Keep responses conversational and under 50 words
-- Avoid mentioning asterisks
+- Respond in plain text only - no asterisks, bold, italic, or any formatting marks
+- Speak naturally as a real person would in conversation
 
 Your company: Mid-size manufacturing company, you're the Operations Manager
 Current challenges: Looking to improve efficiency and reduce costs
@@ -34,7 +35,8 @@ Key behaviors:
 - Show interest in ROI and business impact
 - Be engaged but require thorough explanations
 - Keep responses conversational and under 50 words
-- Avoid mentioning asterisks
+- Respond in plain text only - no asterisks, bold, italic, or any formatting marks
+- Speak naturally as a real person would in conversation
 
 Your company: Growing tech startup, you're the CTO
 Current challenges: Scaling operations and improving team productivity
@@ -49,7 +51,8 @@ Key behaviors:
 - Consider how new features would benefit your team
 - Show interest if benefits are clearly explained
 - Keep responses conversational and under 50 words
-- Avoid mentioning asterisks
+- Respond in plain text only - no asterisks, bold, italic, or any formatting marks
+- Speak naturally as a real person would in conversation
 
 Your company: Established consulting firm, you're the Managing Partner
 Current situation: Happy with existing service, always looking for ways to improve
@@ -85,7 +88,15 @@ Personality: Relationship-focused, values long-term partnerships, cost-conscious
     // Generate response
     const result = await chat.sendMessage(latestMessage)
     const response = await result.response
-    const trainerMessage = response.text()
+    let trainerMessage = response.text()
+
+    // Clean up asterisks and markdown formatting
+    trainerMessage = trainerMessage
+      .replace(/\*\*/g, '') // Remove ** bold markers
+      .replace(/\*/g, '')   // Remove * italic markers
+      .replace(/_{2,}/g, '') // Remove __ underline markers
+      .replace(/_/g, '')     // Remove _ italic markers
+      .trim()
 
     return NextResponse.json({ message: trainerMessage })
   } catch (error) {

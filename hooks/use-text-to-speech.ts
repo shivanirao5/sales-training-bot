@@ -7,9 +7,18 @@ export function useTextToSpeech() {
   const [error, setError] = useState<string | null>(null)
   const currentAudioRef = useRef<HTMLAudioElement | null>(null)
   const currentAudioUrlRef = useRef<string | null>(null)
+  const isProcessingRef = useRef(false)
 
   const speak = useCallback(async (text: string) => {
     if (!text.trim()) return
+    
+    console.log("[TTS] Speak called with:", text.substring(0, 50) + "...")
+    
+    // Prevent multiple simultaneous TTS calls
+    if (isProcessingRef.current) {
+      console.log("[TTS] Already processing, skipping...")
+      return
+    }
 
     // Stop any currently playing audio first
     if (currentAudioRef.current) {
@@ -20,6 +29,7 @@ export function useTextToSpeech() {
       }
     }
 
+    isProcessingRef.current = true
     setIsSpeaking(true)
     setError(null)
 
@@ -46,6 +56,7 @@ export function useTextToSpeech() {
 
       audio.onended = () => {
         setIsSpeaking(false)
+        isProcessingRef.current = false
         URL.revokeObjectURL(audioUrl)
         currentAudioRef.current = null
         currentAudioUrlRef.current = null
@@ -53,6 +64,7 @@ export function useTextToSpeech() {
 
       audio.onerror = () => {
         setIsSpeaking(false)
+        isProcessingRef.current = false
         setError("Failed to play audio")
         URL.revokeObjectURL(audioUrl)
         currentAudioRef.current = null
@@ -63,6 +75,7 @@ export function useTextToSpeech() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
       setIsSpeaking(false)
+      isProcessingRef.current = false
       currentAudioRef.current = null
       currentAudioUrlRef.current = null
     }
@@ -79,6 +92,7 @@ export function useTextToSpeech() {
       currentAudioUrlRef.current = null
     }
     setIsSpeaking(false)
+    isProcessingRef.current = false
   }, [])
 
   return {

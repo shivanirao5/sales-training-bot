@@ -11,15 +11,15 @@ export default function SignUpSuccessPage() {
             <div className="flex justify-center mb-4">
               <CheckCircle className="w-12 h-12 text-green-500" />
             </div>
-            <CardTitle className="text-2xl">Check Your Email</CardTitle>
-            <CardDescription>We&apos;ve sent you a confirmation link to complete your registration.</CardDescription>
+            <CardTitle className="text-2xl">Account Created Successfully!</CardTitle>
+            <CardDescription>Your account has been created and you can now access the sales training platform.</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-sm text-muted-foreground mb-4">
-              Click the link in your email to verify your account and start your sales training journey.
+              You can now start your sales training journey. Sign in to access all training scenarios and track your progress.
             </p>
             <Link href="/auth/login" className="text-purple-600 hover:text-purple-700 underline underline-offset-4">
-              Back to Sign In
+              Go to Sign In
             </Link>
           </CardContent>
         </Card>

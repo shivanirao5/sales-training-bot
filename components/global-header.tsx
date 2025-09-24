@@ -96,16 +96,30 @@ export function GlobalHeader({ user, profile }: GlobalHeaderProps) {
 
   const handleDeleteAccount = async () => {
     setIsLoading(true)
+    setError(null)
+    
     try {
-      // Delete user data from profiles table
-      await supabase.from('profiles').delete().eq('id', user.id)
-      
-      // Sign out user
+      // Call the delete account API
+      const response = await fetch('/api/delete-account', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete account')
+      }
+
+      // Sign out user locally
       await supabase.auth.signOut()
       
+      // Redirect to home page
       router.push("/")
     } catch (error) {
       console.error("Error deleting account:", error)
+      setError(error instanceof Error ? error.message : "Failed to delete account")
     } finally {
       setIsLoading(false)
     }
@@ -272,7 +286,10 @@ export function GlobalHeader({ user, profile }: GlobalHeaderProps) {
       {/* Delete Account Confirmation */}
       <ConfirmationModal
         isOpen={isDeleteAccountOpen}
-        onClose={() => setIsDeleteAccountOpen(false)}
+        onClose={() => {
+          setIsDeleteAccountOpen(false)
+          setError(null)
+        }}
         onConfirm={handleDeleteAccount}
         title="Delete Account"
         message="Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed."
@@ -280,6 +297,13 @@ export function GlobalHeader({ user, profile }: GlobalHeaderProps) {
         cancelText="Keep Account"
         isDestructive={true}
       />
+
+      {/* Show error if delete fails */}
+      {error && isDeleteAccountOpen && (
+        <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50">
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
     </div>
   )
 }
