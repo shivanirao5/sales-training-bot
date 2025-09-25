@@ -174,6 +174,13 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
     const newMessages = [...messages, { role: "user" as const, content: userMessage }]
     setMessages(newMessages)
 
+    // Create conversation ID if this is the first user message
+    let currentConversationId = conversationId
+    if (!currentConversationId) {
+      currentConversationId = crypto.randomUUID()
+      setConversationId(currentConversationId)
+    }
+
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -182,6 +189,7 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
           messages: newMessages,
           scenario,
           userId,
+          conversationId: currentConversationId,
         }),
       })
 
@@ -298,11 +306,6 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
       // Show feedback inline instead of navigating
       setFeedbackData(data)
       setShowFeedback(true)
-      
-      // Store the conversation ID for future use
-      if (data.conversationId) {
-        setConversationId(data.conversationId)
-      }
     } catch (error) {
       console.error("[v0] Error generating feedback:", error)
       alert(`Failed to generate feedback: ${error instanceof Error ? error.message : "Unknown error"}`)
@@ -449,6 +452,7 @@ export function TrainingSession({ scenario, userId }: TrainingSessionProps) {
               onClick={() => {
                 setShowFeedback(false)
                 setFeedbackData(null)
+                setConversationId(null) // Reset conversation ID for new session
                 // Reset the initial message flag so it can be spoken again
                 initialMessageSpoken.current = false
                 setMessages([])

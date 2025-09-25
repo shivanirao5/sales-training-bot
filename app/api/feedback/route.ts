@@ -46,7 +46,6 @@ Format your response as JSON with this structure:
   "scenarioFeedback": "detailed scenario-specific feedback paragraph"
 }
 
-IMPORTANT: Use only plain text in all feedback - no asterisks, bold, italic, or any formatting marks.
 Be constructive, specific, and encouraging while providing actionable insights.`
 
     console.log("[v0] Generating training feedback...")
@@ -61,31 +60,8 @@ Be constructive, specific, and encouraging while providing actionable insights.`
       // Clean the response to extract JSON
       const jsonMatch = feedbackText.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
-        let cleanedJson = jsonMatch[0]
-        // Remove any asterisks or formatting from the JSON content
-        cleanedJson = cleanedJson
-          .replace(/\*\*/g, '')
-          .replace(/\*/g, '')
-          .replace(/_{2,}/g, '')
-          .replace(/_(?!["])/g, '') // Keep underscores within quoted strings
-        
-        feedback = JSON.parse(cleanedJson)
-        
-        // Clean all text fields in the feedback object
-        if (feedback.strengths) {
-          feedback.strengths = feedback.strengths.map((s: string) => s.replace(/\*+/g, '').trim())
-        }
-        if (feedback.improvements) {
-          feedback.improvements = feedback.improvements.map((s: string) => s.replace(/\*+/g, '').trim())
-        }
-        if (feedback.recommendations) {
-          feedback.recommendations = feedback.recommendations.map((s: string) => s.replace(/\*+/g, '').trim())
-        }
-        if (feedback.scenarioFeedback) {
-          feedback.scenarioFeedback = feedback.scenarioFeedback.replace(/\*+/g, '').trim()
-        }
-        
-        console.log("[v0] Successfully parsed and cleaned training feedback JSON")
+        feedback = JSON.parse(jsonMatch[0])
+        console.log("[v0] Successfully parsed training feedback JSON")
       } else {
         console.log("[v0] No JSON found in training response, using fallback")
         throw new Error("No JSON found in response")
@@ -140,24 +116,20 @@ Be constructive, specific, and encouraging while providing actionable insights.`
     } else {
       // Create new conversation
       const title = `${scenario.replace("_", " ")} - ${new Date().toLocaleDateString()}`
-      const { data: newConversation, error: insertError } = await supabase
-        .from("conversations")
-        .insert({
-          user_id: userId,
-          title,
-          scenario_type: scenario,
-          messages: JSON.stringify(messages),
-          score: feedback.score,
-          feedback: JSON.stringify(feedback),
-        })
-        .select()
-        .single()
+      const { data: newConversation, error: insertError } = await supabase.from("conversations").insert({
+        user_id: userId,
+        title,
+        scenario_type: scenario,
+        messages: JSON.stringify(messages),
+        score: feedback.score,
+        feedback: JSON.stringify(feedback),
+      }).select().single()
 
       if (insertError) {
         console.error("[v0] Database insert error:", insertError)
       } else {
-        console.log("[v0] New conversation created successfully with ID:", newConversation?.id)
-        // Return the conversation ID so it can be used for future updates
+        console.log("[v0] New conversation created successfully")
+        // Add the conversation ID to the response
         feedback.conversationId = newConversation?.id
       }
     }
