@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY!)
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, scenario, userId, conversationId } = await request.json()
+    const { messages, scenario, userId } = await request.json()
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
@@ -19,8 +19,8 @@ Key behaviors:
 - Raise common objections like budget, timing, or existing solutions
 - Gradually warm up if the salesperson handles objections well
 - Keep responses conversational and under 50 words
-- Use plain text only, no asterisks, underscores, or any formatting symbols
-- Speak naturally as if in a real phone conversation
+- Respond in plain text only - no asterisks, bold, italic, or any formatting marks
+- Speak naturally as a real person would in conversation
 
 Your company: Mid-size manufacturing company, you're the Operations Manager
 Current challenges: Looking to improve efficiency and reduce costs
@@ -35,8 +35,8 @@ Key behaviors:
 - Show interest in ROI and business impact
 - Be engaged but require thorough explanations
 - Keep responses conversational and under 50 words
-- Use plain text only, no asterisks, underscores, or any formatting symbols
-- Speak naturally as if in a real phone conversation
+- Respond in plain text only - no asterisks, bold, italic, or any formatting marks
+- Speak naturally as a real person would in conversation
 
 Your company: Growing tech startup, you're the CTO
 Current challenges: Scaling operations and improving team productivity
@@ -51,8 +51,8 @@ Key behaviors:
 - Consider how new features would benefit your team
 - Show interest if benefits are clearly explained
 - Keep responses conversational and under 50 words
-- Use plain text only, no asterisks, underscores, or any formatting symbols
-- Speak naturally as if in a real phone conversation
+- Respond in plain text only - no asterisks, bold, italic, or any formatting marks
+- Speak naturally as a real person would in conversation
 
 Your company: Established consulting firm, you're the Managing Partner
 Current situation: Happy with existing service, always looking for ways to improve
@@ -90,49 +90,13 @@ Personality: Relationship-focused, values long-term partnerships, cost-conscious
     const response = await result.response
     let trainerMessage = response.text()
 
-    // Clean the response to remove asterisks and any markdown formatting
+    // Clean up asterisks and markdown formatting
     trainerMessage = trainerMessage
-      .replace(/\*+/g, '') // Remove all asterisks
-      .replace(/_+/g, '') // Remove underscores used for emphasis
-      .replace(/#+\s*/g, '') // Remove hash symbols used for headings
-      .replace(/\[([^\]]+)\]/g, '$1') // Remove square brackets but keep content
-      .replace(/\(([^)]+)\)/g, '') // Remove parentheses and content (often URLs)
+      .replace(/\*\*/g, '') // Remove ** bold markers
+      .replace(/\*/g, '')   // Remove * italic markers
+      .replace(/_{2,}/g, '') // Remove __ underline markers
+      .replace(/_/g, '')     // Remove _ italic markers
       .trim()
-
-    // Save conversation in progress if conversationId is provided
-    if (conversationId && userId) {
-      try {
-        const { createClient } = await import("@/lib/supabase/server")
-        const supabase = await createClient()
-        
-        const updatedMessages = [...messages, { role: "assistant", content: trainerMessage }]
-        const title = `${scenario.replace("_", " ")} - ${new Date().toLocaleDateString()}`
-        
-        // Try to update existing conversation, if not exists then insert
-        const { error: updateError } = await supabase
-          .from("conversations")
-          .update({
-            messages: JSON.stringify(updatedMessages),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", conversationId)
-          .eq("user_id", userId)
-
-        if (updateError?.code === 'PGRST116') {
-          // Conversation doesn't exist, create new one
-          await supabase.from("conversations").insert({
-            id: conversationId,
-            user_id: userId,
-            title,
-            scenario_type: scenario,
-            messages: JSON.stringify(updatedMessages),
-          })
-        }
-      } catch (dbError) {
-        console.error("Error saving conversation:", dbError)
-        // Don't fail the response if DB save fails
-      }
-    }
 
     return NextResponse.json({ message: trainerMessage })
   } catch (error) {
